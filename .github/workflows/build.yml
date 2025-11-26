@@ -1,0 +1,49 @@
+name: iOS Build & Lint
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      # Если используются CocoaPods / Swift Package Manager — адаптировать
+      run: |
+        # пример для CocoaPods
+        if [ -f Podfile ]; then
+          pod install --repo-update
+        fi
+
+    - name: Build iOS app
+      run: |
+        xcodebuild clean build \
+          -workspace TRX-Wallet.xcworkspace \
+          -scheme "TRX-Wallet" \
+          -sdk iphoneos \
+          -configuration Release \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+
+    - name: Run tests
+      run: |
+        xcodebuild test \
+          -workspace TRX-Wallet.xcworkspace \
+          -scheme "TRX-Wallet" \
+          -sdk iphonesimulator \
+          -destination 'platform=iOS Simulator,name=iPhone 14,OS=17.4' \
+          -configuration Debug
+
+    - name: Lint Swift code (optional)
+      # Здесь можно подключить swiftlint или иной линтер, если есть
+      run: |
+        if command -v swiftlint >/dev/null 2>&1; then
+          swiftlint
+        fi
